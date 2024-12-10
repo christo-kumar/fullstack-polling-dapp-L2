@@ -32,3 +32,22 @@ npm install
 
 #12. run the react side
 npm start 
+
+#==================== L2 Setup Instruction #====================
+
+#13 move to folder outside fullstack-polling-dapp-L2 to checkout optimism
+git clone https://github.com/ethereum-optimism/optimism.git
+
+#14 move inside optimism
+cd optimism
+
+#15 make sure docker is installed, validate the by checking version
+docker --version
+
+#16 start local optimism instance
+#L1: http://127.0.0.1:8545
+#L2: http://127.0.0.1:8545
+docker-compose up
+
+#17 Deploy Your Contract Locally
+npx hardhat run scripts/deploy.js --network optimismLocal
