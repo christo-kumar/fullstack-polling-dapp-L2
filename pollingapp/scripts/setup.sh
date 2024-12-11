@@ -35,19 +35,34 @@ npm start
 
 #==================== L2 Setup Instruction #====================
 
-#13 move to folder outside fullstack-polling-dapp-L2 to checkout optimism
-git clone https://github.com/ethereum-optimism/optimism.git
+#1 move to folder outside fullstack-polling-dapp-L2 to checkout zkSync-local
+git clone https://github.com/matter-labs/local-setup.git zkSync-local
 
-#14 move inside optimism
-cd optimism
+#2 move inside optimism
+cd zkSync-local
 
-#15 make sure docker is installed, validate the by checking version
-docker --version
-
-#16 start local optimism instance
+#3 start local optimism instance
 #L1: http://127.0.0.1:8545
 #L2: http://127.0.0.1:8545
-docker-compose up
+#rich wallets: https://github.com/matter-labs/local-setup/blob/main/rich-wallets.json
+./start.sh
+docker ps
 
-#17 Deploy Your Contract Locally
-npx hardhat run scripts/deploy.js --network optimismLocal
+#4 Setup metamask wallet
+#network name: zkSync Local rpc: http://127.0.0.1:3050 chainId: 270  currency: ETH 
+
+#5 cd to pollingapp/backend to install dependencies
+npm install @nomicfoundation/hardhat-ethers 
+npm install @matterlabs/hardhat-zksync-solc   
+npm install @matterlabs/hardhat-zksync-deploy --save-dev 
+npm install zksync-ethers
+
+#6 update hardhat.config.js
+#7 update deploy.js
+
+#8 Deploy Your Contract Locally
+npx hardhat run scripts/deploy.js --network zkSyncLocal
+
+#9 Observe the console on
+npx hardhat console --network zkSyncLocal
+

@@ -10,7 +10,14 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@matterlabs/hardhat-zksync-deploy": "^1.6.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.17"
+  },
+  "dependencies": {
+    "@matterlabs/hardhat-zksync-solc": "^1.2.5",
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "zksync-ethers": "^6.15.3",
+    "zksync-web3": "^0.17.1"
   }
 }
