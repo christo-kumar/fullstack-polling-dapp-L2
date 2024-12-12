@@ -38,7 +38,7 @@ npm start
 #1 move to folder outside fullstack-polling-dapp-L2 to checkout zkSync-local
 git clone https://github.com/matter-labs/local-setup.git zkSync-local
 
-#2 move inside optimism
+#2 move inside zkSync-local
 cd zkSync-local
 
 #3 start local zksync instance
@@ -47,14 +47,7 @@ cd zkSync-local
 #rich wallets: https://github.com/matter-labs/local-setup/blob/main/rich-wallets.json
 ./start.sh
 
-#5 Observe the console on
-npx hardhat console --network zkSyncLocal
-
-
-#6 Setup metamask wallet
-#network name: zkSync Local rpc: http://127.0.0.1:3050 chainId: 270  currency: ETH 
-
-#7 cd to pollingapp/backend to install dependencies
+#4 move into pollingapp/backend to install dependencies
 npm install --save-dev hardhat
 npm install @nomicfoundation/hardhat-ethers 
 npm install @matterlabs/hardhat-zksync-solc   
@@ -62,14 +55,29 @@ npm install @matterlabs/hardhat-zksync-deploy --save-dev
 npm install zksync-ethers
 npm install
 
+#5 start console to observe the activity on zkSyncLocal
+sudo npx hardhat console --network zkSyncLocal
+
+
+#6 Setup metamask wallet get info from log of ./start.sh or use 
+#network name: zkSync Local rpc: http://127.0.0.1:3050 chainId: 270  currency: ETH 
+
 #8 update hardhat.config.js
 #9 update deploy.js
 
 #10 Deploy Your Contract Locally
-npx hardhat run scripts/deploy.js --network zkSyncLocal
+sudo npx hardhat run scripts/deploy.js --network zkSyncLocal
 
 
 #11 End the zksync instances
 docker ps
 docker stop zksync-local-zksync-1 zksync-local-reth-1 zksync-local-postgres-1 zkcli-in-memory-node-zksync-1 buildx_buildkit_mybuilder0
+
+#12 move inside frontend
+npm install zksync-ethers
+
+#13 update the contract.js for admin
+#14 update the contract.js for voting
+
+
 
