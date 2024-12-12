@@ -1,17 +1,15 @@
 const { ethers } = require("hardhat");
 const { Wallet, Provider } = require("zksync-ethers");
 const { Deployer } = require("@matterlabs/hardhat-zksync-deploy");
-
 const fs = require("fs/promises");
+
+const privatekey =
+  "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
 
 async function main() {
   const zkSyncProvider = new Provider(hre.network.config.url);
-  const wallet = new Wallet(
-    "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110",
-    zkSyncProvider
-  );
+  const wallet = new Wallet(privatekey, zkSyncProvider);
   const deployer = new Deployer(hre, wallet);
-  //console.log("********* Deployer Created: ", deployer);
 
   // Load the artifact
   const contractArtifactName = "SingleElectionVoting";

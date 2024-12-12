@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
+import { Provider, Wallet } from "zksync-ethers";
 
-const address = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const address = "0x111C3E89Ce80e62EE88318C2804920D4c96f92bb";
 const abi = [
   {
     inputs: [],
@@ -293,7 +294,11 @@ const abi = [
   },
 ];
 
-const provider = new ethers.BrowserProvider(window.ethereum);
+//const provider = new ethers.BrowserProvider(window.ethereum);
+const privateKey =
+  "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
+const provider = new Provider("http://127.0.0.1:3050");
+const wallet = new Wallet(privateKey, provider);
 
 // Function to connect to MetaMask
 export const connectMetaMask = async () => {
@@ -307,13 +312,65 @@ export const connectMetaMask = async () => {
 };
 
 // Function to get the signer asynchronously
-export const getSigner = async () => {
+/*export const getSigner = async () => {
   try {
     const signer = await provider.getSigner();
     console.log("*** Signer fetched successfully: ***", signer);
     return signer;
   } catch (error) {
     console.error("Error fetching signer:", error);
+    throw new Error(
+      "Could not fetch signer. Please check MetaMask connection."
+    );
+  }
+};*/
+
+export const getSigner = async () => {
+  try {
+    // Initialize the Wallet with the private key and the zkSync provider
+    const wallet = new Wallet(privateKey, provider);
+
+    console.log(
+      "*** Signer (Wallet) fetched successfully: ***",
+      wallet.address
+    );
+    return wallet;
+  } catch (error) {
+    console.error("Error fetching signer:", error);
+    throw new Error(
+      "Could not fetch signer. Please check your private key and provider."
+    );
+  }
+};
+
+export const getSignerForVote = async () => {
+  try {
+    // Ensure MetaMask is connected to the browser
+    if (!window.ethereum) {
+      throw new Error(
+        "MetaMask is not installed. Please install MetaMask and try again."
+      );
+    }
+
+    // Request MetaMask to connect accounts
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    // Get the current account selected in MetaMask
+    const accounts = await window.ethereum.request({ method: "eth_accounts" });
+    if (!accounts.length) {
+      throw new Error("No accounts found in MetaMask.");
+    }
+
+    const selectedAccount = accounts[0];
+    console.log("*** Selected MetaMask Account: ***", selectedAccount);
+
+    // Connect the selected account to the zkSync Provider
+    const signer = provider.getSigner(selectedAccount);
+
+    console.log("*** Signer (MetaMask) fetched successfully: ***", signer);
+    return signer;
+  } catch (error) {
+    console.error("Error fetching signer:", error.message || error);
     throw new Error(
       "Could not fetch signer. Please check MetaMask connection."
     );
@@ -535,9 +592,8 @@ export const hasElectionFinalizedFromContract = async () => {
 export const voteForCandidate = async (candidateAddress) => {
   try {
     const contract = await getContract();
-    const signer = await getSigner();
-    const walletAddress = await signer.getAddress();
-    const nonce = await provider.getTransactionCount(walletAddress);
+    const signer = await getSignerForVote();
+    const nonce = await signer.getTransactionCount();
 
     const tx = await contract.vote(candidateAddress, {
       gasLimit: 1000000,
