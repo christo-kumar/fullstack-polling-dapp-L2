@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { Provider, Wallet } from "zksync-ethers";
 
-const address = "0x111C3E89Ce80e62EE88318C2804920D4c96f92bb";
+const address = "0x4B5DF730c2e6b28E17013A1485E5d9BC41Efe021";
 const abi = [
   {
     inputs: [],
@@ -294,46 +294,16 @@ const abi = [
   },
 ];
 
-//const provider = new ethers.BrowserProvider(window.ethereum);
 const privateKey =
   "0x7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110";
 const provider = new Provider("http://127.0.0.1:3050");
-const wallet = new Wallet(privateKey, provider);
+const browserProvider = new ethers.BrowserProvider(window.ethereum);
 
-// Function to connect to MetaMask
-export const connectMetaMask = async () => {
+// Use zkSync for admin actions (non-voting related)
+export const getSignerForAdmin = async () => {
   try {
-    await provider.send("eth_requestAccounts", []);
-    console.log("MetaMask connected successfully.");
-  } catch (error) {
-    console.error("Error connecting to MetaMask:", error);
-    throw new Error("Failed to connect to MetaMask. Please try again.");
-  }
-};
-
-// Function to get the signer asynchronously
-/*export const getSigner = async () => {
-  try {
-    const signer = await provider.getSigner();
-    console.log("*** Signer fetched successfully: ***", signer);
-    return signer;
-  } catch (error) {
-    console.error("Error fetching signer:", error);
-    throw new Error(
-      "Could not fetch signer. Please check MetaMask connection."
-    );
-  }
-};*/
-
-export const getSigner = async () => {
-  try {
-    // Initialize the Wallet with the private key and the zkSync provider
     const wallet = new Wallet(privateKey, provider);
-
-    console.log(
-      "*** Signer (Wallet) fetched successfully: ***",
-      wallet.address
-    );
+    console.log("*** Signer (Admin) fetched successfully: ***", wallet.address);
     return wallet;
   } catch (error) {
     console.error("Error fetching signer:", error);
@@ -343,34 +313,13 @@ export const getSigner = async () => {
   }
 };
 
-export const getSignerForVote = async () => {
+export const getMetaMaskSigner = async () => {
   try {
-    // Ensure MetaMask is connected to the browser
-    if (!window.ethereum) {
-      throw new Error(
-        "MetaMask is not installed. Please install MetaMask and try again."
-      );
-    }
-
-    // Request MetaMask to connect accounts
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-
-    // Get the current account selected in MetaMask
-    const accounts = await window.ethereum.request({ method: "eth_accounts" });
-    if (!accounts.length) {
-      throw new Error("No accounts found in MetaMask.");
-    }
-
-    const selectedAccount = accounts[0];
-    console.log("*** Selected MetaMask Account: ***", selectedAccount);
-
-    // Connect the selected account to the zkSync Provider
-    const signer = provider.getSigner(selectedAccount);
-
-    console.log("*** Signer (MetaMask) fetched successfully: ***", signer);
+    const signer = await browserProvider.getSigner();
+    console.log("*** Signer fetched successfully: ***", signer);
     return signer;
   } catch (error) {
-    console.error("Error fetching signer:", error.message || error);
+    console.error("Error fetching signer:", error);
     throw new Error(
       "Could not fetch signer. Please check MetaMask connection."
     );
@@ -378,15 +327,12 @@ export const getSignerForVote = async () => {
 };
 
 // Function to get the contract instance
-export const getContract = async () => {
-  try {
-    const signer = await getSigner();
-    const contract = new ethers.Contract(address, abi, signer);
-    return contract;
-  } catch (error) {
-    console.error("Error creating contract instance:", error);
-    throw new Error("Could not create contract instance.");
-  }
+export const getContract = async (useMetaMask = false) => {
+  const signer = useMetaMask
+    ? await getMetaMaskSigner()
+    : await getSignerForAdmin();
+  const contract = new ethers.Contract(address, abi, signer);
+  return contract;
 };
 
 // Function to get contract instance for reading
@@ -400,11 +346,32 @@ export const getContractReadOnly = async () => {
   }
 };
 
+// Function to vote for a candidate
+export const voteForCandidate = async (candidateAddress) => {
+  try {
+    const contract = await getContract(true);
+    const signer = await getMetaMaskSigner();
+    const walletAddress = await signer.getAddress();
+    const nonce = await browserProvider.getTransactionCount(walletAddress);
+
+    const tx = await contract.vote(candidateAddress, {
+      gasLimit: 1000000,
+      nonce,
+    });
+    console.log("Vote transaction sent:", tx.hash);
+    await tx.wait();
+    console.log("Vote successfully cast!");
+  } catch (error) {
+    console.error("Error voting:", error.message || error);
+    throw new Error("Failed to cast vote.");
+  }
+};
+
 // Function to create an election
 export const createElection = async (name, startDate, endDate) => {
   try {
     const contract = await getContract();
-    const signer = await getSigner();
+    const signer = await getSignerForAdmin();
     const walletAddress = await signer.getAddress();
     const nonce = await provider.getTransactionCount(walletAddress);
 
@@ -432,7 +399,7 @@ export const createElection = async (name, startDate, endDate) => {
 export const startElection = async () => {
   try {
     const contract = await getContract();
-    const signer = await getSigner();
+    const signer = await getSignerForAdmin();
     const walletAddress = await signer.getAddress();
     const nonce = await provider.getTransactionCount(walletAddress);
 
@@ -485,7 +452,7 @@ export const addCandidate = async (
 ) => {
   try {
     const contract = await getContract();
-    const signer = await getSigner();
+    const signer = await getSignerForAdmin();
     const walletAddress = await signer.getAddress();
     const nonce = await provider.getTransactionCount(walletAddress);
     const tx = await contract.addCandidate(
@@ -523,7 +490,7 @@ export const getCandidates = async () => {
 export const addVoter = async (voterAddress, name, age) => {
   try {
     const contract = await getContract();
-    const signer = await getSigner();
+    const signer = await getSignerForAdmin();
     const walletAddress = await signer.getAddress();
     const nonce = await provider.getTransactionCount(walletAddress);
     const tx = await contract.addVoter(voterAddress, name, age, {
@@ -585,26 +552,6 @@ export const hasElectionFinalizedFromContract = async () => {
       error.message || error
     );
     throw new Error("Failed to fetch election finalized status.");
-  }
-};
-
-// Function to vote for a candidate
-export const voteForCandidate = async (candidateAddress) => {
-  try {
-    const contract = await getContract();
-    const signer = await getSignerForVote();
-    const nonce = await signer.getTransactionCount();
-
-    const tx = await contract.vote(candidateAddress, {
-      gasLimit: 1000000,
-      nonce,
-    });
-    console.log("Vote transaction sent:", tx.hash);
-    await tx.wait();
-    console.log("Vote successfully cast!");
-  } catch (error) {
-    console.error("Error voting:", error.message || error);
-    throw new Error("Failed to cast vote.");
   }
 };
 
