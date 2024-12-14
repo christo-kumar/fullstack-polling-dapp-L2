@@ -1,6 +1,6 @@
 require("@nomicfoundation/hardhat-ethers");
 require("@matterlabs/hardhat-zksync-solc");
-//require("@nomicfoundation/hardhat-toolbox"); // Optional, depending on your requirements
+
 
 module.exports = {
   solidity: {
